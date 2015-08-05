@@ -1,9 +1,18 @@
---- http://en.literateprograms.org/Word_count_%28Haskell%29
---- http://leiffrenzel.de/papers/commandline-options-in-haskell.html
+--- example http://en.literateprograms.org/Word_count_%28Haskell%29
+--- example http://leiffrenzel.de/papers/commandline-options-in-haskell.html
+
+------------------------------------------------- USAGE -------------------------------------------------
+-- 
+--- runhaskell RunTraceFile2DB.hs -l dummyLogFile.txt -d test1.db
+----- Above command will parse logfile (dummyLogFile.txt) and insert rows into database file (test1.db)
+------------------------------------------------- USAGE -------------------------------------------------
 
 module RunTraceFile2DB where
 
 --import System ( getArgs )
+
+import Control.Monad
+import Control.Applicative
 import System.Environment ( getArgs )
 import System.Directory (doesFileExist)
 import System.Console.GetOpt
@@ -37,7 +46,7 @@ handleCommandLineOptions flags = do
   let dbfile = getDatabaseFile flags
   print $ "dbfile: " ++ dbfile
   -- assertFileExists dbfile -- dbfile will be created if does not exists
-
+  -- Insert records from file to db.
   ToDB.insertRecordsFromFile logfile dbfile
 
 getLogfile :: [Flag] -> FilePath
@@ -57,3 +66,6 @@ assertFileExists logfile = do
   exists <- doesFileExist logfile
   if (exists) then print $ "file exists: " ++ logfile
     else error $ "Error: file does not exists: " ++ logfile
+
+--insertRecordsFromFiles :: [FilePath] -> IO ()
+

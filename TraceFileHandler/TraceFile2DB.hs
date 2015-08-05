@@ -43,6 +43,14 @@ TraceRecordDB
    traceType Text
    message Text
    deriving Show
+
+StoredFileRecordDB
+   filename Text
+   size Int
+   time    Double
+   deriving (Show)
+   deriving Eq
+   deriving Ord --Ord, Eq)
 |]
 
 {-
@@ -101,6 +109,30 @@ insertRecordsFromFile p dbf = do
   mtraces <- readTracesFromFileDB p
   keys <- insertRecodsToSqliteDB mtraces dbf
   forM keys print
+
+----------- FILE RECORS -----------
+getStoredFileRecordDB :: FilePath -> StoredFileRecordDB
+getStoredFileRecordDB f = StoredFileRecordDB (T.pack f) 0 0
+
+inserFileInfoRecord :: StoredFileRecordDB -> FilePath -> IO (Key StoredFileRecordDB)
+inserFileInfoRecord record dbf = runSqlite (T.pack dbf) $ do
+    runMigrationSilent migrateTables
+    insert record
+
+--- r1 = StoredFileRecordDB "sdf" 1 1 :: StoredFileRecordDB
+inserFileInfo :: FilePath -> FilePath -> IO (Key StoredFileRecordDB)
+inserFileInfo f dbf = inserFileInfoRecord (getStoredFileRecordDB f) dbf
+
+insertRecordsFromFileAndFileInfo :: FilePath -> FilePath -> IO [()]
+insertRecordsFromFileAndFileInfo f dbf = do
+  inserFileInfo f dbf
+  insertRecordsFromFile f dbf
+
+insertRecordsFromFiles :: [FilePath] -> FilePath -> IO [[()]]
+insertRecordsFromFiles fs dbf = forM fs $
+  \f -> do
+    insertRecordsFromFileAndFileInfo f dbf
+
 
 dbFilePath = "test1.db" -- :: FilePath 
 record1 = TraceRecordDB 2 "1" 2 3 "type2" "Basic tracing"
